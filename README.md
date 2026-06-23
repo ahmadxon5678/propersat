@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SAT Prep Support Platform
 
-## Getting Started
+Local MVP for SAT Math diagnostic tests, teacher-controlled live sessions, weak-spot analysis, and vocabulary practice.
 
-First, run the development server:
+## Install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma migrate dev
+npm run seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev -- -p 3003
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Local URL:
 
-## Learn More
+```text
+http://localhost:3003
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Test Logins
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Teacher:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+teacher / teacher123
+```
 
-## Deploy on Vercel
+Founder/admin:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+Click "SAT Prep Login" 5 times, then enter: AhmadJohns!09
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Students:
+
+```text
+ali / student123
+sara / student123
+timur / student123
+```
+
+## App Structure
+
+- `src/app/login` - simple local login.
+- `src/app/teacher` - teacher dashboard for students, question sets, live sessions, results, and vocabulary.
+- `src/app/student` - student dashboard, live tests, past scores, and vocabulary practice.
+- `src/lib/actions.ts` - server actions for auth, sessions, grading, submissions, and vocabulary attempts.
+- `src/lib/analytics.ts` - weak-topic aggregation by missed question tags.
+- `prisma/schema.prisma` - SQLite data model.
+- `prisma/seed.ts` - demo teacher, students, question sets, and vocabulary.
+
+## Platform Details
+
+See [`docs/platform.md`](docs/platform.md) for the product purpose, user flows, domain model, learning loop, analytics behavior, retest behavior, and deployment notes copied from the Obsidian project folder.
+
+## Notes
+
+- This is a local MVP. Passwords are stored plainly for speed and simplicity; replace this before using with real student data.
+- SAT EBRW is not implemented yet. Question sets already include a `module` field so future modules can be added without replacing the core session/submission flow.
+- Students only see active live sessions assigned to them and cannot submit the same live session twice.

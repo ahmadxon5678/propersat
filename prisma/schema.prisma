@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int                  @id @default(autoincrement())
+  name           String?
+  username       String               @unique
+  password       String
+  role           String
+  createdAt      DateTime             @default(now())
+  assigned       LiveSessionStudent[]
+  submissions    Submission[]
+  vocabAttempts  VocabAttempt[]
+  strugglePoints StrugglePoint[]
+}
+
+model QuestionSet {
+  id              Int           @id @default(autoincrement())
+  title           String
+  description     String        @default("")
+  durationMinutes Int           @default(25)
+  active          Boolean       @default(true)
+  hidden          Boolean       @default(false)
+  module          String        @default("math")
+  setType         String        @default("topical")
+  visibility      String        @default("public")
+  accessCode      String?
+  createdAt       DateTime      @default(now())
+  questions       Question[]
+  sessions        LiveSession[]
+}
+
+model Question {
+  id             Int         @id @default(autoincrement())
+  questionSetId  Int
+  text           String
+  imageUrl       String?
+  answerType     String
+  choices        String       @default("[]")
+  correctAnswer  String
+  topicTags      String       @default("[]")
+  difficulty     String       @default("mid")
+  notes          String?
+  order          Int          @default(0)
+  questionSet    QuestionSet  @relation(fields: [questionSetId], references: [id], onDelete: Cascade)
+  answers        Answer[]
+}
+
+model LiveSession {
+  id             Int                  @id @default(autoincrement())
+  questionSetId  Int
+  status         String               @default("ACTIVE")
+  startedAt      DateTime             @default(now())
+  endedAt        DateTime?
+  questionSet    QuestionSet          @relation(fields: [questionSetId], references: [id], onDelete: Cascade)
+  assigned       LiveSessionStudent[]
+  submissions    Submission[]
+}
+
+model LiveSessionStudent {
+  id             Int          @id @default(autoincrement())
+  liveSessionId  Int
+  studentId      Int
+  liveSession    LiveSession  @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([liveSessionId, studentId])
+}
+
+model Submission {
+  id             Int          @id @default(autoincrement())
+  liveSessionId  Int
+  studentId      Int
+  score          Int
+  total          Int
+  submittedAt    DateTime     @default(now())
+  liveSession    LiveSession  @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers        Answer[]
+
+  @@unique([liveSessionId, studentId])
+}
+
+model Answer {
+  id            Int         @id @default(autoincrement())
+  submissionId  Int
+  questionId    Int
+  response      String
+  isCorrect     Boolean
+  submission    Submission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question      Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model VocabularyItem {
+  id             Int            @id @default(autoincrement())
+  vocabSetId     Int?
+  word           String
+  definition     String
+  aliases        String         @default("[]")
+  difficulty     String?
+  tag            String?
+  createdAt      DateTime       @default(now())
+  vocabSet        VocabSet?      @relation(fields: [vocabSetId], references: [id], onDelete: SetNull)
+  attempts       VocabAttempt[]
+}
+
+model VocabAttempt {
+  id             Int             @id @default(autoincrement())
+  studentId      Int
+  vocabItemId    Int
+  response       String
+  isCorrect      Boolean
+  attemptedAt    DateTime        @default(now())
+  student        User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  vocabItem      VocabularyItem  @relation(fields: [vocabItemId], references: [id], onDelete: Cascade)
+}
+
+model VocabSet {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String           @default("")
+  active      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  items       VocabularyItem[]
+}
+
+model AppSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model StrugglePoint {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  topic     String
+  source    String   @default("failed_retest")
+  notes     String   @default("")
+  createdAt DateTime @default(now())
+  resolved  Boolean  @default(false)
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, topic, source])
+}
