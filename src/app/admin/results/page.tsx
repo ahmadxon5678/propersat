@@ -35,7 +35,7 @@ export default async function AdminResultsPage({ searchParams }: { searchParams:
   const questionSets = await prisma.questionSet.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      questions: true,
+      questions: { orderBy: { order: "asc" } },
       sessions: {
         include: {
           submissions: {
@@ -141,19 +141,19 @@ function SelectedSetResults({
   const difficulty = difficultyStatsFromAnswers(allAnswers);
   const weakTopics = weakTopicsFromAnswers(allAnswers);
   const questionStats = set.questions
-    .map((question) => {
+    .map((question, index) => {
       const answers = allAnswers.filter((answer) => answer.question.id === question.id);
       const correct = answers.filter((answer) => answer.isCorrect).length;
       return {
         question,
+        questionNumber: question.order || index + 1,
         attempts: answers.length,
         correct,
         missed: answers.length - correct,
         correctRate: answers.length ? correct / answers.length : 0,
       };
     })
-    .filter((item) => item.attempts > 0)
-    .sort((a, b) => a.correctRate - b.correctRate || b.missed - a.missed);
+    .sort((a, b) => b.missed - a.missed || a.correctRate - b.correctRate || a.questionNumber - b.questionNumber);
 
   const selectedMisses = selectedStudentSubmission?.answers.filter((answer) => !answer.isCorrect) ?? [];
 
@@ -181,28 +181,16 @@ function SelectedSetResults({
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-xl font-black text-slate-950">Least-correct questions</h3>
-          <table className="mt-4 w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-700">
-              <tr>
-                <th className="p-3">Question</th>
-                <th className="p-3">Difficulty</th>
-                <th className="p-3">Correct</th>
-                <th className="p-3">Missed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {questionStats.slice(0, 3).map((item, index) => (
-                <tr key={item.question.id} className="border-t border-slate-100">
-                  <td className="p-3 font-semibold">#{index + 1} {item.question.text}</td>
-                  <td className="p-3">{item.question.difficulty}</td>
-                  <td className="p-3">{item.correct}/{item.attempts}</td>
-                  <td className="p-3 text-red-700">{item.missed}</td>
-                </tr>
-              ))}
-              {questionStats.length === 0 ? <tr><td colSpan={4} className="p-3 text-slate-500">No answers yet.</td></tr> : null}
-            </tbody>
-          </table>
+          <h3 className="text-xl font-black text-slate-950">Question misses</h3>
+          <p className="mt-1 text-sm text-slate-500">Question number - students incorrect</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {questionStats.map((item) => (
+              <div key={item.question.id} className={`rounded-xl border px-4 py-3 text-center ${item.missed ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+                <span className="text-lg font-black">{item.questionNumber} - {item.missed}</span>
+              </div>
+            ))}
+            {questionStats.length === 0 ? <p className="text-sm text-slate-500">No questions in this set.</p> : null}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

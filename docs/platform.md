@@ -48,7 +48,7 @@ Create tagged questions -> assign/take tests -> grade -> weak topic report -> re
 | `retest` | Locked test used to verify whether a weak area improved. |
 | `full_exam` | Mini/full exam style set. |
 
-Question sets also include `active`, `hidden`, `visibility`, `durationMinutes`, and `module`. The active module is `math`, with room for EBRW later.
+Question sets also include `active`, `hidden`, `visibility`, `durationMinutes`, `module`, and an optional per-set `retestPassword`. Locked/retest sets should use the saved per-set password; the old global secret is only a fallback for older rows.
 
 ## VocaQuiz
 
@@ -96,7 +96,7 @@ When a student submits a question set where `setType === "retest"`:
 | Model | Meaning |
 | --- | --- |
 | `User` | Admin, teacher, or student. |
-| `QuestionSet` | A math set, exam, or retest. |
+| `QuestionSet` | A math/EBRW set, exam, or retest with optional per-set retest password. |
 | `Question` | One question inside a set. |
 | `LiveSession` | A test attempt container created by teacher/admin or student self-start. |
 | `LiveSessionStudent` | Assignment of a session to a student. |

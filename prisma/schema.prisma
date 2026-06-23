@@ -36,6 +36,7 @@ model QuestionSet {
   setType         String        @default("topical")
   visibility      String        @default("public")
   accessCode      String?
+  retestPassword  String?
   createdAt       DateTime      @default(now())
   questions       Question[]
   sessions        LiveSession[]

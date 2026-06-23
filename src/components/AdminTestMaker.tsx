@@ -47,6 +47,14 @@ export async function AdminTestMaker({
               </select>
               <input name="durationMinutes" type="number" min="1" defaultValue={25} className="rounded-xl border border-slate-200 px-3 py-2" />
             </div>
+            <label className="block text-sm font-bold text-slate-600">
+              Retest Password
+              <input
+                name="retestPassword"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                placeholder="Enter password students will use for retest"
+              />
+            </label>
             <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
               <input name="publish" type="checkbox" />
               Publish immediately
@@ -65,7 +73,7 @@ export async function AdminTestMaker({
                 <option key={set.id} value={set.id}>{set.title}</option>
               ))}
             </select>
-            <textarea name="text" className="min-h-24 rounded-xl border border-slate-200 px-3 py-2" placeholder="Question text" required />
+            <textarea name="text" className="min-h-24 rounded-xl border border-slate-200 px-3 py-2" placeholder="Question text, or upload an image below" />
             <input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp" className="rounded-xl border border-dashed border-blue-300 bg-blue-50 px-3 py-3 text-sm" />
             <div className="grid gap-3 md:grid-cols-3">
               <select name="answerType" className="rounded-xl border border-slate-200 px-3 py-2">
@@ -99,7 +107,7 @@ export async function AdminTestMaker({
                   <p className="text-sm text-slate-500">
                     {set.questions.length} questions / {set.durationMinutes} min / {set.setType.replace("_", " ")} / {set.active ? "Published" : "Draft"}
                   </p>
-                  {locked ? <p className="mt-2 text-sm font-black text-red-700">Access code: {set.accessCode}</p> : null}
+                  {locked ? <p className="mt-2 text-sm font-black text-red-700">Retest/password protected</p> : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {!set.active ? (
@@ -124,7 +132,7 @@ export async function AdminTestMaker({
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {set.questions.slice(0, 6).map((question, index) => (
                   <div key={question.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                    <p className="font-black">Q{index + 1}: {question.text}</p>
+                    <p className="font-black">Q{index + 1}: {question.text || "Image-only question"}</p>
                     <p className="mt-1 text-slate-500">Difficulty: {question.difficulty}</p>
                     {question.imageUrl ? <p className="mt-1 text-blue-700">Screenshot attached</p> : null}
                   </div>

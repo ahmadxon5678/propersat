@@ -9,6 +9,7 @@ async function createQuestionSetIfMissing({
   module,
   setType,
   accessCode,
+  retestPassword,
   questions,
 }: {
   title: string;
@@ -16,6 +17,7 @@ async function createQuestionSetIfMissing({
   module: "math" | "ebrw";
   setType: "topical" | "retest";
   accessCode?: string;
+  retestPassword?: string;
   questions: Array<{
     text: string;
     answerType: "numeric" | "multiple_choice";
@@ -26,9 +28,17 @@ async function createQuestionSetIfMissing({
   }>;
 }) {
   const existing = await prisma.questionSet.findFirst({ where: { title } });
-  if (existing) return;
-
   const locked = setType === "retest";
+  if (existing) {
+    if (locked && !existing.retestPassword) {
+      await prisma.questionSet.update({
+        where: { id: existing.id },
+        data: { retestPassword: retestPassword || accessCode || null },
+      });
+    }
+    return;
+  }
+
   await prisma.questionSet.create({
     data: {
       title,
@@ -40,6 +50,7 @@ async function createQuestionSetIfMissing({
       setType,
       visibility: locked ? "secret" : "public",
       accessCode: locked ? accessCode : null,
+      retestPassword: locked ? retestPassword || accessCode || null : null,
       questions: {
         create: questions.map((question, index) => ({
           order: index + 1,
@@ -96,6 +107,7 @@ async function main() {
     module: "math",
     setType: "retest",
     accessCode: "MATH42",
+    retestPassword: "MATH42",
     questions: [
       { text: "If 5x + 10 = 25, what is x?", answerType: "numeric", correctAnswer: "3", difficulty: "easy", topicTags: ["coordinate algebra", "linear equations"] },
       { text: "For y = 3x + 1, what is y when x = 5?", answerType: "numeric", correctAnswer: "16", difficulty: "easy", topicTags: ["coordinate algebra", "functions"] },
@@ -125,6 +137,7 @@ async function main() {
     module: "ebrw",
     setType: "retest",
     accessCode: "EBRW42",
+    retestPassword: "EBRW42",
     questions: [
       { text: "Which word is closest to 'brief'?", answerType: "multiple_choice", correctAnswer: "short", choices: ["short", "loud", "late", "wide"], difficulty: "easy", topicTags: ["vocabulary"] },
       { text: "Best transition: 'The plan was risky. ___, it succeeded.'", answerType: "multiple_choice", correctAnswer: "However", choices: ["However", "Because", "For instance", "Likewise"], difficulty: "mid", topicTags: ["transitions"] },

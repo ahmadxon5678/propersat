@@ -29,7 +29,6 @@ Set these Railway environment variables:
 ```text
 DATABASE_URL=file:/data/database.db
 ADMIN_PASSWORD=<private admin password>
-SECRET_TEST_PASSWORD=<private retest password>
 ```
 
 For persistent SQLite data, attach a Railway Volume to the service with mount path:
@@ -44,7 +43,7 @@ The production `npm start` command runs:
 prisma migrate deploy && npm run seed:defaults && next start
 ```
 
-That creates the SQLite schema before register/login/admin pages run, then inserts default question/vocab content only if missing.
+That creates the SQLite schema before register/login/admin pages run, then inserts default question/vocab content only if missing. Retest passwords are stored per question set in the database and edited from the admin panel.
 
 ## Test Logins
 

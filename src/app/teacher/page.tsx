@@ -101,10 +101,11 @@ export default async function TeacherPage() {
 
         <section id="question-sets" className="space-y-4">
           <h2 className="text-2xl font-semibold">Question Sets</h2>
-          <form action={createQuestionSetAction} className="grid gap-3 rounded border bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_120px_100px_100px_auto]">
+          <form action={createQuestionSetAction} className="grid gap-3 rounded border bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_120px_160px_100px_100px_auto]">
             <input name="title" className="rounded border px-3 py-2" placeholder="Set title" required />
             <input name="description" className="rounded border px-3 py-2" placeholder="Description" />
             <input name="durationMinutes" type="number" min="1" defaultValue={25} className="rounded border px-3 py-2" />
+            <input name="retestPassword" className="rounded border px-3 py-2" placeholder="Retest Password" />
             <label className="flex items-center gap-2 text-sm">
               <input name="active" type="checkbox" defaultChecked /> Active
             </label>
@@ -117,11 +118,12 @@ export default async function TeacherPage() {
           <div className="space-y-5">
             {questionSets.map((set) => (
               <article key={set.id} className="rounded border bg-white p-4 shadow-sm">
-                <form action={updateQuestionSetAction} className="grid gap-3 md:grid-cols-[1fr_1fr_110px_90px_90px_auto]">
+                <form action={updateQuestionSetAction} className="grid gap-3 md:grid-cols-[1fr_1fr_110px_160px_90px_90px_auto]">
                   <input type="hidden" name="id" value={set.id} />
                   <input name="title" defaultValue={set.title} className="rounded border px-3 py-2 font-medium" />
                   <input name="description" defaultValue={set.description} className="rounded border px-3 py-2" />
                   <input name="durationMinutes" type="number" defaultValue={set.durationMinutes} className="rounded border px-3 py-2" />
+                  <input name="retestPassword" defaultValue={set.retestPassword ?? ""} className="rounded border px-3 py-2" placeholder="Retest Password" />
                   <label className="flex items-center gap-2 text-sm">
                     <input name="active" type="checkbox" defaultChecked={set.active} /> Active
                   </label>
@@ -137,7 +139,7 @@ export default async function TeacherPage() {
                 <div className="mt-4 space-y-3">
                   {set.questions.map((question, index) => (
                     <details key={question.id} className="rounded border p-3">
-                      <summary className="cursor-pointer font-medium">Q{index + 1}: {question.text.slice(0, 90)}</summary>
+                      <summary className="cursor-pointer font-medium">Q{index + 1}: {(question.text || "Image-only question").slice(0, 90)}</summary>
                       <form action={updateQuestionAction} className="mt-3 grid gap-3">
                         <input type="hidden" name="id" value={question.id} />
                         <input type="hidden" name="existingImageUrl" value={question.imageUrl ?? ""} />
@@ -180,7 +182,7 @@ export default async function TeacherPage() {
 
                 <form action={addQuestionAction} className="mt-4 grid gap-3 rounded bg-gray-50 p-3">
                   <input type="hidden" name="questionSetId" value={set.id} />
-                  <textarea name="text" className="min-h-20 rounded border px-3 py-2" placeholder="New question text" required />
+                  <textarea name="text" className="min-h-20 rounded border px-3 py-2" placeholder="New question text, or upload an image below" />
                   <div className="grid gap-3 md:grid-cols-3">
                     <select name="answerType" className="rounded border px-3 py-2">
                       <option value="multiple_choice">Multiple choice</option>

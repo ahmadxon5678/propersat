@@ -150,6 +150,7 @@ async function main() {
       module: "math",
       setType: "retest",
       visibility: "secret",
+      retestPassword: "retest2026",
       questions: {
         create: [
           {

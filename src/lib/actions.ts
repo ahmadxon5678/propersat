@@ -182,6 +182,7 @@ export async function createQuestionSetAction(formData: FormData) {
   const setType = text(formData, "setType") || "topical";
   const hidden = visibility === "secret" || setType === "retest";
   const questionModule = text(formData, "module") || "math";
+  const retestPassword = text(formData, "retestPassword");
 
   await prisma.questionSet.create({
     data: {
@@ -194,6 +195,7 @@ export async function createQuestionSetAction(formData: FormData) {
       setType,
       visibility: hidden ? "secret" : visibility,
       accessCode: hidden ? await createUniqueAccessCode() : null,
+      retestPassword: retestPassword || null,
     },
   });
   adminPath("/admin/math");
@@ -212,6 +214,7 @@ export async function updateQuestionSetAction(formData: FormData) {
   const hidden = visibility === "secret" || setType === "retest";
   const current = await prisma.questionSet.findUnique({ where: { id } });
   if (!current) return;
+  const retestPassword = text(formData, "retestPassword");
 
   await prisma.questionSet.update({
     where: { id },
@@ -224,6 +227,7 @@ export async function updateQuestionSetAction(formData: FormData) {
       setType,
       visibility: hidden ? "secret" : visibility,
       accessCode: hidden ? current.accessCode || await createUniqueAccessCode() : null,
+      retestPassword: retestPassword || null,
     },
   });
   adminPath("/admin/question-sets");
@@ -237,15 +241,16 @@ export async function addQuestionAction(formData: FormData) {
   await requireManager();
   const questionSetId = Number(formData.get("questionSetId"));
   const questionText = text(formData, "text");
-  if (!questionSetId || !questionText) return;
+  const uploadedImage = await saveQuestionImage(formData);
+  const imageUrl = uploadedImage || text(formData, "imageUrl") || null;
+  if (!questionSetId || (!questionText && !imageUrl)) return;
 
   const count = await prisma.question.count({ where: { questionSetId } });
-  const uploadedImage = await saveQuestionImage(formData);
   await prisma.question.create({
     data: {
       questionSetId,
       text: questionText,
-      imageUrl: uploadedImage || text(formData, "imageUrl") || null,
+      imageUrl,
       answerType: text(formData, "answerType") || "multiple_choice",
       choices: listToJson(formData.get("choices")),
       correctAnswer: text(formData, "correctAnswer"),
@@ -269,11 +274,14 @@ export async function updateQuestionAction(formData: FormData) {
   const uploadedImage = await saveQuestionImage(formData);
   const existingImage = text(formData, "existingImageUrl");
   const removeImage = formData.get("removeImage") === "on";
+  const imageUrl = removeImage ? null : uploadedImage || existingImage || text(formData, "imageUrl") || null;
+  const questionText = text(formData, "text");
+  if (!questionText && !imageUrl) return;
   await prisma.question.update({
     where: { id },
     data: {
-      text: text(formData, "text"),
-      imageUrl: removeImage ? null : uploadedImage || existingImage || text(formData, "imageUrl") || null,
+      text: questionText,
+      imageUrl,
       answerType: text(formData, "answerType") || "multiple_choice",
       choices: listToJson(formData.get("choices")),
       correctAnswer: text(formData, "correctAnswer"),
@@ -356,7 +364,8 @@ export async function startSetAttemptAction(_: unknown, formData: FormData) {
 
   if (isLockedSet(set)) {
     const secretPassword = await getSetting("secret_password", DEFAULT_SECRET_PASSWORD);
-    if (password !== (set.accessCode || secretPassword)) return { error: "Wrong test password." };
+    const expectedPassword = set.retestPassword || set.accessCode || secretPassword;
+    if (password !== expectedPassword) return { error: "Wrong test password." };
   }
 
   const session = await prisma.liveSession.create({

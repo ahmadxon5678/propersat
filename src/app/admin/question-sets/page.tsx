@@ -54,7 +54,7 @@ export default async function AdminQuestionSetsPage({ searchParams }: { searchPa
           const locked = set.visibility === "secret" || set.hidden || set.setType === "retest";
           return (
             <article key={set.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <form action={updateQuestionSetAction} className="grid gap-3 xl:grid-cols-[1fr_1fr_120px_140px_140px_90px_auto]">
+              <form action={updateQuestionSetAction} className="grid gap-3 xl:grid-cols-[1fr_1fr_120px_140px_140px_180px_90px_auto]">
                 <input type="hidden" name="id" value={set.id} />
                 <input name="title" defaultValue={set.title} className="rounded-xl border border-slate-200 px-3 py-2 font-bold" />
                 <input name="description" defaultValue={set.description} className="rounded-xl border border-slate-200 px-3 py-2" />
@@ -68,6 +68,12 @@ export default async function AdminQuestionSetsPage({ searchParams }: { searchPa
                   <option value="public">Public</option>
                   <option value="secret">Secret</option>
                 </select>
+                <input
+                  name="retestPassword"
+                  defaultValue={set.retestPassword ?? ""}
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  placeholder="Retest Password"
+                />
                 <label className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold">
                   <input name="active" type="checkbox" defaultChecked={set.active} /> Active
                 </label>
@@ -77,7 +83,7 @@ export default async function AdminQuestionSetsPage({ searchParams }: { searchPa
                 <span className="rounded-full bg-slate-100 px-3 py-1 font-bold">{set.questions.length} questions</span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 font-bold">{set.module.toUpperCase()}</span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 font-bold">{set.active ? "Published" : "Draft"}</span>
-                {locked ? <span className="rounded-full bg-red-50 px-3 py-1 font-black text-red-700">Access code: {set.accessCode}</span> : null}
+                {locked ? <span className="rounded-full bg-red-50 px-3 py-1 font-black text-red-700">Password protected</span> : null}
                 {!set.active ? (
                   <form action={publishQuestionSetAction}>
                     <input type="hidden" name="id" value={set.id} />
@@ -98,11 +104,11 @@ export default async function AdminQuestionSetsPage({ searchParams }: { searchPa
               <div className="mt-5 space-y-3">
                 {set.questions.map((question, index) => (
                   <details key={question.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <summary className="cursor-pointer font-black">Q{index + 1}: {question.text.slice(0, 120)}</summary>
+                    <summary className="cursor-pointer font-black">Q{index + 1}: {(question.text || "Image-only question").slice(0, 120)}</summary>
                     <form action={updateQuestionAction} className="mt-4 grid gap-3">
                       <input type="hidden" name="id" value={question.id} />
                       <input type="hidden" name="existingImageUrl" value={question.imageUrl ?? ""} />
-                      <textarea name="text" defaultValue={question.text} className="min-h-24 rounded-xl border border-slate-200 px-3 py-2" required />
+                      <textarea name="text" defaultValue={question.text} className="min-h-24 rounded-xl border border-slate-200 px-3 py-2" placeholder="Question text, or keep blank when an image is attached" />
                       {question.imageUrl ? (
                         <div className="space-y-2">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -146,7 +152,7 @@ export default async function AdminQuestionSetsPage({ searchParams }: { searchPa
 
               <form action={addQuestionAction} className="mt-5 grid gap-3 rounded-xl bg-blue-50 p-4">
                 <input type="hidden" name="questionSetId" value={set.id} />
-                <textarea name="text" className="min-h-20 rounded-xl border border-slate-200 px-3 py-2" placeholder="New question text" required />
+                <textarea name="text" className="min-h-20 rounded-xl border border-slate-200 px-3 py-2" placeholder="New question text, or upload an image below" />
                 <input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp" className="rounded-xl border border-dashed border-blue-300 bg-white px-3 py-3 text-sm" />
                 <div className="grid gap-3 md:grid-cols-3">
                   <select name="answerType" className="rounded-xl border border-slate-200 px-3 py-2">
