@@ -1,12 +1,13 @@
 import { AdminShell } from "@/components/AdminShell";
 import { getSetting, updateSettingsAction } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_SECRET_PASSWORD } from "@/lib/config";
 
 export default async function AdminSettingsPage() {
   const user = await requireUser("admin");
   const [secretPassword, adminPassword] = await Promise.all([
-    getSetting("secret_password", "retest2026"),
-    getSetting("admin_password", "AhmadJohns!09"),
+    getSetting("secret_password", DEFAULT_SECRET_PASSWORD),
+    getSetting("admin_password", DEFAULT_ADMIN_PASSWORD),
   ]);
 
   return (

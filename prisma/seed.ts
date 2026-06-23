@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_SECRET_PASSWORD } from "../src/lib/config";
 
 const prisma = new PrismaClient();
 
@@ -20,15 +21,15 @@ async function main() {
 
   await prisma.appSetting.createMany({
     data: [
-      { key: "admin_password", value: "AhmadJohns!09" },
-      { key: "secret_password", value: "retest2026" },
+      { key: "admin_password", value: DEFAULT_ADMIN_PASSWORD || "change-me" },
+      { key: "secret_password", value: DEFAULT_SECRET_PASSWORD },
     ],
   });
 
   await prisma.user.createMany({
     data: [
       { name: "Teacher", username: "teacher", password: "teacher123", role: "teacher" },
-      { name: "Ahmadxon", username: "founder", password: "AhmadJohns!09", role: "admin" },
+      { name: "Ahmadxon", username: "founder", password: DEFAULT_ADMIN_PASSWORD || "change-me", role: "admin" },
       { name: "Ali", username: "ali", password: "student123", role: "student" },
       { name: "Sara", username: "sara", password: "student123", role: "student" },
       { name: "Timur", username: "timur", password: "student123", role: "student" },

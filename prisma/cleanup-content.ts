@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_SECRET_PASSWORD } from "../src/lib/config";
 
 const prisma = new PrismaClient();
 
@@ -17,12 +18,12 @@ async function main() {
   await prisma.appSetting.upsert({
     where: { key: "admin_password" },
     update: {},
-    create: { key: "admin_password", value: "AhmadJohns!09" },
+    create: { key: "admin_password", value: DEFAULT_ADMIN_PASSWORD || "change-me" },
   });
   await prisma.appSetting.upsert({
     where: { key: "secret_password" },
     update: {},
-    create: { key: "secret_password", value: "retest2026" },
+    create: { key: "secret_password", value: DEFAULT_SECRET_PASSWORD },
   });
 }
 

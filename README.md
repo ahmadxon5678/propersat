@@ -22,6 +22,30 @@ Local URL:
 http://localhost:3003
 ```
 
+## Railway Deployment
+
+Set these Railway environment variables:
+
+```text
+DATABASE_URL=file:/data/database.db
+ADMIN_PASSWORD=<private admin password>
+SECRET_TEST_PASSWORD=<private retest password>
+```
+
+For persistent SQLite data, attach a Railway Volume to the service with mount path:
+
+```text
+/data
+```
+
+The production `npm start` command runs:
+
+```bash
+prisma migrate deploy && npm run seed:defaults && next start
+```
+
+That creates the SQLite schema before register/login/admin pages run, then inserts default question/vocab content only if missing.
+
 ## Test Logins
 
 Teacher:
@@ -33,7 +57,7 @@ teacher / teacher123
 Founder/admin:
 
 ```text
-Click "SAT Prep Login" 5 times, then enter: AhmadJohns!09
+Click "SAT Prep Login" 5 times, then enter the ADMIN_PASSWORD value configured in Railway.
 ```
 
 Students:

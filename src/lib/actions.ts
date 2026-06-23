@@ -5,12 +5,11 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { redirect } from "next/navigation";
 import { clearLoginCookie, currentUser, requireUser, setLoginCookie } from "./auth";
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_SECRET_PASSWORD } from "./config";
 import { prisma } from "./db";
 import { listToJson, parseJsonList } from "./format";
 import { gradeAnswer, isCloseVocabAnswer, isVocabCorrect } from "./grading";
 
-const DEFAULT_ADMIN_PASSWORD = "AhmadJohns!09";
-const DEFAULT_SECRET_PASSWORD = "retest2026";
 const RETEST_THRESHOLD = 0.7;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -93,6 +92,10 @@ export async function loginAction(_: unknown, formData: FormData) {
 export async function founderLoginAction(_: unknown, formData: FormData) {
   const password = text(formData, "founderPassword");
   const adminPassword = await getSetting("admin_password", DEFAULT_ADMIN_PASSWORD);
+
+  if (!adminPassword) {
+    return { error: "Admin password is not configured." };
+  }
 
   if (password !== adminPassword) {
     return { error: "Wrong admin password." };

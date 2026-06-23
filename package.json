@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "prisma migrate deploy && npm run seed:defaults && next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "seed:defaults": "tsx prisma/seed-default-content.ts",
     "cleanup:content": "tsx prisma/cleanup-content.ts"
