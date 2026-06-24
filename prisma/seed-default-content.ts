@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import satJune2025Verbal from "./content/sat-june-2025-v1-int-verbal.json";
+import satJune2025V2VerbalFirst27 from "./content/sat-june-2025-v2-int-verbal-first-27.json";
 
 const prisma = new PrismaClient();
 const json = (items: string[]) => JSON.stringify(items);
@@ -98,6 +99,15 @@ async function createVocabSetIfMissing(title: string, description: string, items
 
 async function main() {
   await createQuestionSetIfMissing(satJune2025Verbal as {
+    title: string;
+    description: string;
+    module: "ebrw";
+    setType: "full_exam";
+    durationMinutes: number;
+    questions: QuestionSeed[];
+  });
+
+  await createQuestionSetIfMissing(satJune2025V2VerbalFirst27 as {
     title: string;
     description: string;
     module: "ebrw";
