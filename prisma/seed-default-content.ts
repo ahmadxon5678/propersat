@@ -1,7 +1,18 @@
 import { PrismaClient } from "@prisma/client";
+import satJune2025Verbal from "./content/sat-june-2025-v1-int-verbal.json";
 
 const prisma = new PrismaClient();
 const json = (items: string[]) => JSON.stringify(items);
+
+type QuestionSeed = {
+  text: string;
+  answerType: "numeric" | "multiple_choice";
+  correctAnswer: string;
+  choices?: string[];
+  difficulty: "easy" | "mid" | "hard";
+  topicTags?: string[];
+  notes?: string | null;
+};
 
 async function createQuestionSetIfMissing({
   title,
@@ -10,22 +21,17 @@ async function createQuestionSetIfMissing({
   setType,
   accessCode,
   retestPassword,
+  durationMinutes,
   questions,
 }: {
   title: string;
   description: string;
   module: "math" | "ebrw";
-  setType: "topical" | "retest";
+  setType: "topical" | "retest" | "full_exam";
   accessCode?: string;
   retestPassword?: string;
-  questions: Array<{
-    text: string;
-    answerType: "numeric" | "multiple_choice";
-    correctAnswer: string;
-    choices?: string[];
-    difficulty: "easy" | "mid" | "hard";
-    topicTags?: string[];
-  }>;
+  durationMinutes?: number;
+  questions: QuestionSeed[];
 }) {
   const existing = await prisma.questionSet.findFirst({ where: { title } });
   const locked = setType === "retest";
@@ -43,7 +49,7 @@ async function createQuestionSetIfMissing({
     data: {
       title,
       description,
-      durationMinutes: locked ? 12 : 15,
+      durationMinutes: durationMinutes ?? (locked ? 12 : 15),
       active: true,
       hidden: locked,
       module,
@@ -60,6 +66,7 @@ async function createQuestionSetIfMissing({
           correctAnswer: question.correctAnswer,
           difficulty: question.difficulty,
           topicTags: json(question.topicTags ?? []),
+          notes: question.notes ?? null,
         })),
       },
     },
@@ -87,6 +94,15 @@ async function createVocabSetIfMissing(title: string, description: string, items
 }
 
 async function main() {
+  await createQuestionSetIfMissing(satJune2025Verbal as {
+    title: string;
+    description: string;
+    module: "ebrw";
+    setType: "full_exam";
+    durationMinutes: number;
+    questions: QuestionSeed[];
+  });
+
   await createQuestionSetIfMissing({
     title: "Default Math Coordinate Algebra",
     description: "Simple coordinate algebra check.",
