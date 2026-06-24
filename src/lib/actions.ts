@@ -14,9 +14,14 @@ const RETEST_THRESHOLD = 0.7;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const DIFFICULTIES = new Set(["easy", "mid", "hard"]);
+const VOCAB_VISIBILITIES = new Set(["private", "public"]);
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function json(items: string[]) {
+  return JSON.stringify(items);
 }
 
 function adminPath(pathname = "") {
@@ -27,6 +32,26 @@ function adminPath(pathname = "") {
 function difficulty(formData: FormData) {
   const value = text(formData, "difficulty");
   return DIFFICULTIES.has(value) ? value : "mid";
+}
+
+function parseVocabCards(value: FormDataEntryValue | null) {
+  try {
+    const parsed = JSON.parse(String(value ?? "[]")) as Array<{ word?: string; definition?: string; aliases?: string[] | string }>;
+    return parsed
+      .map((item) => ({
+        word: String(item.word ?? "").trim(),
+        definition: String(item.definition ?? "").trim(),
+        aliases: Array.isArray(item.aliases)
+          ? item.aliases.map(String).map((alias) => alias.trim()).filter(Boolean)
+          : String(item.aliases ?? "")
+              .split(/\r?\n|,/)
+              .map((alias) => alias.trim())
+              .filter(Boolean),
+      }))
+      .filter((item) => item.word && item.definition);
+  } catch {
+    return [];
+  }
 }
 
 function createAccessCode() {
@@ -460,6 +485,8 @@ export async function createVocabSetAction(formData: FormData) {
       title,
       description: text(formData, "description"),
       active: formData.get("publish") === "on",
+      visibility: "public",
+      isOfficial: true,
     },
   });
   adminPath("/admin/vocaquiz");
@@ -474,6 +501,7 @@ export async function createVocabAction(formData: FormData) {
   if (!word || !definition) return;
 
   const vocabSetId = Number(formData.get("vocabSetId")) || null;
+  const count = vocabSetId ? await prisma.vocabularyItem.count({ where: { vocabSetId } }) : 0;
   await prisma.vocabularyItem.create({
     data: {
       vocabSetId,
@@ -482,12 +510,99 @@ export async function createVocabAction(formData: FormData) {
       aliases: listToJson(formData.get("aliases")),
       difficulty: null,
       tag: null,
+      order: count + 1,
     },
   });
   adminPath("/admin/vocaquiz");
   adminPath("/admin/question-sets");
   revalidatePath("/teacher");
   revalidatePath("/student/vocab");
+}
+
+export async function saveVocabSetBuilderAction(formData: FormData) {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+
+  const id = Number(formData.get("id")) || null;
+  const title = text(formData, "title");
+  const cards = parseVocabCards(formData.get("cardsJson"));
+  const saveAndPractice = formData.get("saveAndPractice") === "true";
+  const role = user.role;
+  const isManager = role === "admin" || role === "teacher";
+  const basePath = isManager ? "/admin/vocaquiz" : "/student/vocabulary";
+
+  if (!title || cards.length < 2) {
+    redirect(`${basePath}${id ? `/${id}/edit` : "/new"}?error=invalid`);
+  }
+
+  let vocabSetId = id;
+  const requestedVisibility = text(formData, "visibility");
+  const visibility = VOCAB_VISIBILITIES.has(requestedVisibility) ? requestedVisibility : "private";
+
+  if (id) {
+    const existing = await prisma.vocabSet.findUnique({ where: { id } });
+    if (!existing) redirect(basePath);
+    if (!isManager && existing.ownerId !== user.id) redirect(basePath);
+
+    await prisma.vocabSet.update({
+      where: { id },
+      data: {
+        title,
+        description: text(formData, "description"),
+        visibility: isManager ? "public" : visibility,
+        active: isManager ? true : true,
+        isOfficial: isManager ? true : existing.isOfficial,
+      },
+    });
+    await prisma.vocabularyItem.deleteMany({ where: { vocabSetId: id } });
+  } else {
+    const created = await prisma.vocabSet.create({
+      data: {
+        title,
+        description: text(formData, "description"),
+        active: true,
+        visibility: isManager ? "public" : visibility,
+        isOfficial: isManager,
+        ownerId: isManager ? null : user.id,
+      },
+    });
+    vocabSetId = created.id;
+  }
+
+  await prisma.vocabularyItem.createMany({
+    data: cards.map((card, index) => ({
+      vocabSetId,
+      word: card.word,
+      definition: card.definition,
+      aliases: json(card.aliases),
+      order: index + 1,
+    })),
+  });
+
+  adminPath("/admin/vocaquiz");
+  revalidatePath("/student");
+  revalidatePath("/student/vocab");
+  revalidatePath("/student/vocabulary");
+
+  if (saveAndPractice && vocabSetId) redirect(`/student/vocabulary?set=${vocabSetId}`);
+  redirect(basePath);
+}
+
+export async function deleteVocabSetAction(formData: FormData) {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+  const id = Number(formData.get("id"));
+  if (!id) return;
+  const existing = await prisma.vocabSet.findUnique({ where: { id } });
+  if (!existing) return;
+  const isManager = user.role === "admin" || user.role === "teacher";
+  if (!isManager && existing.ownerId !== user.id) redirect("/student/vocabulary");
+
+  await prisma.vocabSet.delete({ where: { id } });
+  adminPath("/admin/vocaquiz");
+  revalidatePath("/student");
+  revalidatePath("/student/vocab");
+  revalidatePath("/student/vocabulary");
 }
 
 export async function submitVocabAction(_: unknown, formData: FormData) {
@@ -536,7 +651,7 @@ export async function publishVocabSetAction(formData: FormData) {
   await requireManager();
   const id = Number(formData.get("id"));
   if (!id) return;
-  await prisma.vocabSet.update({ where: { id }, data: { active: true } });
+  await prisma.vocabSet.update({ where: { id }, data: { active: true, visibility: "public", isOfficial: true } });
   adminPath("/admin/vocaquiz");
   adminPath("/admin/question-sets");
   revalidatePath("/student");

@@ -1,6 +1,8 @@
-import { BookOpen, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Plus } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
-import { createVocabAction, createVocabSetAction, publishVocabSetAction } from "@/lib/actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { deleteVocabSetAction, publishVocabSetAction } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { parseJsonList } from "@/lib/format";
@@ -8,77 +10,63 @@ import { parseJsonList } from "@/lib/format";
 export default async function VocaQuizMakerPage() {
   const user = await requireUser("admin");
   const vocabSets = await prisma.vocabSet.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { items: { orderBy: { word: "asc" } } },
+    orderBy: [{ isOfficial: "desc" }, { updatedAt: "desc" }],
+    include: { items: { orderBy: [{ order: "asc" }, { word: "asc" }] }, owner: true },
   });
 
   return (
-    <AdminShell username={user.username} title="VocaQuiz Maker" subtitle="Build vocabulary sets as drafts, add words, then publish when ready.">
-      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <form action={createVocabSetAction} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-blue-50 p-3 text-blue-700"><BookOpen className="h-5 w-5" /></div>
-            <h2 className="text-xl font-black">Create VocaQuiz draft</h2>
+    <AdminShell username={user.username} title="VocaQuiz Maker" subtitle="Create and manage official vocabulary sets with the card builder.">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-blue-50 p-3 text-blue-700"><BookOpen className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-xl font-black text-slate-950">Vocabulary sets</h2>
+            <p className="mt-1 text-sm text-slate-500">Use the Quizlet-style builder for title, description, import, aliases, and card ordering.</p>
           </div>
-          <div className="mt-5 space-y-3">
-            <input name="title" className="w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Set name" required />
-            <textarea name="description" className="min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="Description" />
-            <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
-              <input name="publish" type="checkbox" />
-              Publish immediately
-            </label>
-            <button className="rounded-xl bg-blue-700 px-5 py-2 font-black text-white hover:bg-blue-800">Create set</button>
-          </div>
-        </form>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-black">Add word to a set</h2>
-          <form action={createVocabAction} className="mt-5 grid gap-3 md:grid-cols-2">
-            <select name="vocabSetId" className="rounded-xl border border-slate-200 px-3 py-2" required>
-              <option value="">Choose VocaQuiz set</option>
-              {vocabSets.map((set) => (
-                <option key={set.id} value={set.id}>{set.title}</option>
-              ))}
-            </select>
-            <input name="word" className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Word" required />
-            <input name="definition" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" placeholder="Definition" required />
-            <input name="aliases" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" placeholder="Accepted forms, optional: beutiful, beatiful" />
-            <button className="rounded-xl bg-blue-700 px-5 py-2 font-black text-white hover:bg-blue-800 md:w-fit">Add word</button>
-          </form>
         </div>
+        <Link href="/admin/vocaquiz/new" className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white hover:bg-blue-800">
+          <Plus className="h-4 w-4" /> Create vocabulary set
+        </Link>
       </section>
 
       <section className="mt-6 space-y-4">
-        <h2 className="text-2xl font-black">Quizzes made</h2>
         {vocabSets.map((set) => (
           <article key={set.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xl font-black">{set.title}</p>
-                <p className="text-sm text-slate-500">{set.items.length} words / {set.active ? "Published" : "Draft"}</p>
+                <div className="flex flex-wrap gap-2 text-xs font-black">
+                  {set.isOfficial ? <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Official</span> : <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">Student set</span>}
+                  <span className={`rounded-full px-3 py-1 ${set.active ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>{set.active ? "Published" : "Draft"}</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">{set.visibility}</span>
+                </div>
+                <p className="mt-3 text-xl font-black text-slate-950">{set.title}</p>
+                <p className="mt-1 text-sm text-slate-500">{set.items.length} words / owner: {set.isOfficial ? "Proper SAT Prep" : set.owner?.username ?? "Unknown"}</p>
               </div>
-              {!set.active ? (
-                <form action={publishVocabSetAction}>
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/admin/vocaquiz/${set.id}/edit`} className="rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700">Edit</Link>
+                {!set.active ? (
+                  <form action={publishVocabSetAction}>
+                    <input type="hidden" name="id" value={set.id} />
+                    <button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Publish</button>
+                  </form>
+                ) : null}
+                <form action={deleteVocabSetAction}>
                   <input type="hidden" name="id" value={set.id} />
-                  <button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Publish</button>
+                  <ConfirmButton message={`Delete "${set.title}" and all words?`} className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-black text-red-700">
+                    Delete
+                  </ConfirmButton>
                 </form>
-              ) : (
-                <span className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">Published</span>
-              )}
+              </div>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {set.items.map((item) => (
+              {set.items.slice(0, 6).map((item) => (
                 <div key={item.id} className="rounded-xl bg-slate-50 p-3 text-sm">
                   <p className="font-black">{item.word}</p>
                   <p className="mt-1 text-slate-600">{item.definition}</p>
                   <p className="mt-1 text-xs text-slate-400">Aliases: {parseJsonList(item.aliases).join(", ") || "none"}</p>
                 </div>
               ))}
-              {set.items.length === 0 ? (
-                <div className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
-                  <EyeOff className="h-4 w-4" /> No words added yet.
-                </div>
-              ) : null}
+              {set.items.length === 0 ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">No words added yet.</p> : null}
             </div>
           </article>
         ))}

@@ -22,6 +22,7 @@ model User {
   assigned       LiveSessionStudent[]
   submissions    Submission[]
   vocabAttempts  VocabAttempt[]
+  vocabSets      VocabSet[]
   strugglePoints StrugglePoint[]
 }
 
@@ -111,6 +112,7 @@ model VocabularyItem {
   aliases        String         @default("[]")
   difficulty     String?
   tag            String?
+  order           Int            @default(0)
   createdAt      DateTime       @default(now())
   vocabSet        VocabSet?      @relation(fields: [vocabSetId], references: [id], onDelete: SetNull)
   attempts       VocabAttempt[]
@@ -129,10 +131,15 @@ model VocabAttempt {
 
 model VocabSet {
   id          Int              @id @default(autoincrement())
+  ownerId     Int?
   title       String
   description String           @default("")
   active      Boolean          @default(false)
+  visibility  String           @default("public")
+  isOfficial  Boolean          @default(false)
   createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  owner       User?            @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   items       VocabularyItem[]
 }
 

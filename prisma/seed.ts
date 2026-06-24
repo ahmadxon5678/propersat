@@ -207,21 +207,24 @@ async function main() {
     data: {
       title: "Core SAT Vocabulary",
       description: "Demo VocaQuiz set for flashcards and typed practice.",
+      active: true,
+      visibility: "public",
+      isOfficial: true,
     },
   });
 
   await prisma.vocabularyItem.createMany({
     data: [
-      { vocabSetId: vocabSet.id, word: "abate", definition: "To become less intense or widespread.", aliases: json(["lessen", "subside"]), difficulty: "medium", tag: "common SAT" },
-      { vocabSetId: vocabSet.id, word: "ambiguous", definition: "Open to more than one interpretation.", aliases: json(["unclear"]), difficulty: "medium", tag: "precision" },
-      { vocabSetId: vocabSet.id, word: "bolster", definition: "To support or strengthen.", aliases: json(["strengthen", "support"]), difficulty: "medium", tag: "verbs" },
-      { vocabSetId: vocabSet.id, word: "candid", definition: "Truthful and straightforward.", aliases: json(["honest", "frank"]), difficulty: "easy", tag: "tone" },
-      { vocabSetId: vocabSet.id, word: "concede", definition: "To admit that something is true after first denying it.", aliases: json(["admit"]), difficulty: "medium", tag: "argument" },
-      { vocabSetId: vocabSet.id, word: "elicit", definition: "To draw out a response or reaction.", aliases: json(["evoke"]), difficulty: "hard", tag: "verbs" },
-      { vocabSetId: vocabSet.id, word: "mitigate", definition: "To make less severe or serious.", aliases: json(["reduce", "alleviate"]), difficulty: "hard", tag: "common SAT" },
-      { vocabSetId: vocabSet.id, word: "novel", definition: "New, original, or unusual.", aliases: json(["new", "original"]), difficulty: "easy", tag: "description" },
-      { vocabSetId: vocabSet.id, word: "pragmatic", definition: "Practical and focused on results.", aliases: json(["practical"]), difficulty: "medium", tag: "description" },
-      { vocabSetId: vocabSet.id, word: "scrutinize", definition: "To examine closely and carefully.", aliases: json(["examine", "inspect"]), difficulty: "medium", tag: "verbs" },
+      { vocabSetId: vocabSet.id, word: "abate", definition: "To become less intense or widespread.", aliases: json(["lessen", "subside"]), difficulty: "medium", tag: "common SAT", order: 1 },
+      { vocabSetId: vocabSet.id, word: "ambiguous", definition: "Open to more than one interpretation.", aliases: json(["unclear"]), difficulty: "medium", tag: "precision", order: 2 },
+      { vocabSetId: vocabSet.id, word: "bolster", definition: "To support or strengthen.", aliases: json(["strengthen", "support"]), difficulty: "medium", tag: "verbs", order: 3 },
+      { vocabSetId: vocabSet.id, word: "candid", definition: "Truthful and straightforward.", aliases: json(["honest", "frank"]), difficulty: "easy", tag: "tone", order: 4 },
+      { vocabSetId: vocabSet.id, word: "concede", definition: "To admit that something is true after first denying it.", aliases: json(["admit"]), difficulty: "medium", tag: "argument", order: 5 },
+      { vocabSetId: vocabSet.id, word: "elicit", definition: "To draw out a response or reaction.", aliases: json(["evoke"]), difficulty: "hard", tag: "verbs", order: 6 },
+      { vocabSetId: vocabSet.id, word: "mitigate", definition: "To make less severe or serious.", aliases: json(["reduce", "alleviate"]), difficulty: "hard", tag: "common SAT", order: 7 },
+      { vocabSetId: vocabSet.id, word: "novel", definition: "New, original, or unusual.", aliases: json(["new", "original"]), difficulty: "easy", tag: "description", order: 8 },
+      { vocabSetId: vocabSet.id, word: "pragmatic", definition: "Practical and focused on results.", aliases: json(["practical"]), difficulty: "medium", tag: "description", order: 9 },
+      { vocabSetId: vocabSet.id, word: "scrutinize", definition: "To examine closely and carefully.", aliases: json(["examine", "inspect"]), difficulty: "medium", tag: "verbs", order: 10 },
     ],
   });
 }

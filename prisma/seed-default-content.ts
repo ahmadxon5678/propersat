@@ -82,11 +82,14 @@ async function createVocabSetIfMissing(title: string, description: string, items
       title,
       description,
       active: true,
+      visibility: "public",
+      isOfficial: true,
       items: {
-        create: items.map((item) => ({
+        create: items.map((item, index) => ({
           word: item.word,
           definition: item.definition,
           aliases: json(item.aliases ?? []),
+          order: index + 1,
         })),
       },
     },
