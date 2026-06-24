@@ -7,7 +7,7 @@ Local MVP for SAT Math diagnostic tests, teacher-controlled live sessions, weak-
 ```bash
 npm install
 npx prisma migrate dev
-npm run seed
+npm run seed:defaults
 ```
 
 ## Run
@@ -40,10 +40,12 @@ For persistent SQLite data, attach a Railway Volume to the service with mount pa
 The production `npm start` command runs:
 
 ```bash
-prisma migrate deploy && npm run seed:defaults && next start
+node scripts/validate-production-db.mjs && prisma migrate deploy && npm run seed:defaults && next start
 ```
 
-That creates the SQLite schema before register/login/admin pages run, then inserts default question/vocab content only if missing. Retest passwords are stored per question set in the database and edited from the admin panel.
+That first refuses to boot if production SQLite is not pointed at `/data`, then creates the SQLite schema before register/login/admin pages run, then inserts default question/vocab content only if missing. Retest passwords are stored per question set in the database and edited from the admin panel.
+
+Do not use `file:./database.db`, `file:./dev.db`, or any other relative SQLite path in Railway. Relative SQLite files live inside the deploy container and can be lost on rebuild/redeploy. The app now fails startup in production when this is misconfigured.
 
 ## Test Logins
 
@@ -75,7 +77,8 @@ timur / student123
 - `src/lib/actions.ts` - server actions for auth, sessions, grading, submissions, and vocabulary attempts.
 - `src/lib/analytics.ts` - weak-topic aggregation by missed question tags.
 - `prisma/schema.prisma` - SQLite data model.
-- `prisma/seed.ts` - demo teacher, students, question sets, and vocabulary.
+- `prisma/seed-default-content.ts` - safe default content insert; skips existing titles.
+- `prisma/seed.ts` - destructive local demo reset; requires `WIPE_DB=YES`.
 
 ## Platform Details
 

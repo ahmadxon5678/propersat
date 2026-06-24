@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "prisma migrate deploy && npm run seed:defaults && next start",
+    "start": "node scripts/validate-production-db.mjs && prisma migrate deploy && npm run seed:defaults && next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",

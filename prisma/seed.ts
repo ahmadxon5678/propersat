@@ -6,6 +6,10 @@ const prisma = new PrismaClient();
 const json = (items: string[]) => JSON.stringify(items);
 
 async function main() {
+  if (process.env.WIPE_DB !== "YES") {
+    throw new Error("Refusing to wipe database. Run with WIPE_DB=YES only when you intentionally want to reset all local data.");
+  }
+
   await prisma.answer.deleteMany();
   await prisma.submission.deleteMany();
   await prisma.liveSessionStudent.deleteMany();

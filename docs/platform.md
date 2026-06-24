@@ -89,7 +89,8 @@ When a student submits a question set where `setType === "retest"`:
 | Grading | `src/lib/grading.ts` |
 | Formatting helpers | `src/lib/format.ts` |
 | Data model | `prisma/schema.prisma` |
-| Seed data | `prisma/seed.ts` |
+| Safe default content seed | `prisma/seed-default-content.ts` |
+| Destructive local reset seed | `prisma/seed.ts` |
 
 ## Domain Model
 
@@ -112,5 +113,10 @@ When a student submits a question set where `setType === "retest"`:
 
 - `prisma/dev.db` is local-only and ignored.
 - `.env` is local-only and ignored.
-- Railway must provide the production environment variables required by Prisma and the app.
+- Railway must provide `DATABASE_URL=file:/data/database.db`.
+- Railway must have a persistent volume attached to the service with mount path `/data`.
+- Never use a relative SQLite path such as `file:./database.db` in production. That stores the database inside the deploy container and data can disappear after rebuilds/redeploys.
+- Production startup runs `scripts/validate-production-db.mjs` and refuses to boot if the SQLite file is not under `/data`.
+- `npm run seed:defaults` is safe and only inserts missing default content.
+- `npm run seed` and `npm run cleanup:content` are destructive and require explicit environment flags.
 - Current auth is MVP-only: plain text passwords and a simple `sat_user_id` cookie. Add password hashing and stronger session handling before using real student data.
